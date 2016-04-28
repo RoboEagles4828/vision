@@ -86,6 +86,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
        	conn.send(str(xtotal) + "," + str(ytotal) + "\n")
 	#these are the coordinates we want to aim at. Now get them on the PI!!!
 	# clear the stream in preparation for the next frame
-	cv2.imwrite("/home/pi/tostream/stream.jpg", image)
+	#cv2.imwrite("/home/pi/tostream/stream.jpg", image)
 	rawCapture.truncate(0)
 camera.close()
