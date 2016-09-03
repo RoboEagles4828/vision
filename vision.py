@@ -10,7 +10,7 @@ import socket
 camera = PiCamera()
 camera.resolution = (320, 240)
 camera.framerate = 15
-camera.vflip = True
+#camera.vflip = True
 camera.hflip = True
 camera.awb_mode = 'off'
 #camera.image_effect = 'solarize'
