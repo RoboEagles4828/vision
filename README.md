@@ -17,4 +17,4 @@ python + OpenCV on raspberry pi
     sudo apt-get install libopencv-dev python-opencv
     sudo apt-get install python-picamera
     ```
-    * Slow: [Build OpenCV 3 From Source](http://www.pyimagesearch.com/2016/04/18/install-guide-raspberry-pi-3-raspbian-jessie-opencv-3)
+    * Recommended: [Build OpenCV 3 From Source](http://www.pyimagesearch.com/2016/04/18/install-guide-raspberry-pi-3-raspbian-jessie-opencv-3)
