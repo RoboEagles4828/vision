@@ -2,24 +2,15 @@ import socket
 import time
 
 import numpy as np
+from imutils.video import FPS
+import imutils
 
+import camera
 import cv2
-from picamera import PiCamera
-from picamera.array import PiRGBArray
 
-# initialize the camera and grab a reference to the raw camera capture
-camera = PiCamera()
-camera.resolution = (320, 240)
-camera.framerate = 15
-# camera.vflip = True
-camera.hflip = True
-camera.awb_mode = 'off'
-# camera.image_effect = 'solarize'
-# camera.image_effect_params = 0
-camera.brightness = 75
-camera.awb_gains = (1.45, 1.45)
-camera.exposure_mode = 'off'
-rawCapture = PiRGBArray(camera, size=(320, 240))
+# to setup ram disk
+# in /etc/fstab add line "tmpfs /var/tmp tmpfs nodev,nosuid,size=50m 0 0"
+# sudo mount -a
 
 # initialize network socket
 HOST = ''
@@ -31,46 +22,34 @@ soc.listen(5)
 conn, addr = soc.accept()
 print("Got connection from", addr)
 
-# allow the camera to warmup
-time.sleep(1.0)
+# initialize the video stream
+stream = camera().start()
+time.sleep(2.0)
+fps = FPS().start()
 
-for frame in camera.capture_continuous(
-        rawCapture, format="bgr", use_video_port=True):
-    # grab the raw NumPy array representing the image, then initialize the timestamp
-    # and occupied/unoccupied text
-    image = frame.array
+# start cv loop
+while True:
+    # grab image from stream
+    image = stream.read()
+    image = imutils.resize(image, 320, 240)
+    img = cv2.cvtColor(image, cv2.cv.CV_BGR2HSV)
 
     # do the stuff
-    img = cv2.resize(image, (320, 240))
-    img2 = cv2.cvtColor(img, cv2.cv.CV_BGR2HSV)
     # GREEN_MIN=np.array([58,28,138])
     # GREEN_MAX=np.array([96,255,255])
     GREEN_MIN = np.array([57, 0, 156])
     GREEN_MAX = np.array([91, 181, 255])
-    mask = cv2.inRange(img2, GREEN_MIN, GREEN_MAX)
+    mask = cv2.inRange(img, GREEN_MIN, GREEN_MAX)
     contours0, hierarchy = cv2.findContours(mask, cv2.RETR_TREE,
                                             cv2.CHAIN_APPROX_SIMPLE)
     contours1 = []
     # print cv2.contourArea(contours0[0])
     for cnt in contours0:
         # print(cnt)
-        M = cv2.moments(cnt)
-        # print(M['m00'])
-        # area=cv2.contourArea(cnt)
-        area = M['m00']
-        """
-        hull = cv2.convexHull(cnt)
-        hull_area = cv2.contourArea(hull)
-        try:
-            solidity = float(area)/hull_area
-            break
-        except ZeroDivisionError:
-            #print('hull = ' + str(hull_area))
-            solidity = 74
-        """
+        area = cv2.contourArea(cnt)
         print('area  = ' + str(area))
-        # print solidity
-        if area > 100.0:  # and solidity<75:
+
+        if area > 100.0:
             contours1.append(cnt)
             print "hi"
     contours = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours1]
@@ -84,10 +63,15 @@ for frame in camera.capture_continuous(
             ytotal += i[0][1]
             xtotal /= len(a)
             ytotal /= len(a)
-    # print str(xtotal) + " " + str(ytotal)
+
     # send to pi using network socket
     conn.send(str(xtotal) + "," + str(ytotal) + "\n")
-    # clear the stream in preparation for the next frame
-    cv2.imwrite("/home/pi/tostream/stream.jpg", image)
-    rawCapture.truncate(0)
-camera.close()
+    # print str(xtotal) + " " + str(ytotal)
+
+    # save to ram disk
+    cv2.imwrite("/var/temp/stream.jpg", image)
+
+    # update the fps counter and print fps
+    fps.update()
+    print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+camera.stop()
