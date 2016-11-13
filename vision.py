@@ -35,9 +35,7 @@ while True:
     img = cv2.cvtColor(image, cv2.cv.CV_BGR2HSV)
 
     # do the stuff
-    # GREEN_MIN=np.array([58,28,138])
-    # GREEN_MAX=np.array([96,255,255])
-    GREEN_MIN = np.array([57, 0, 156])
+    GREEN_MIN = np.array([50, 21, 156])
     GREEN_MAX = np.array([91, 181, 255])
     mask = cv2.inRange(img, GREEN_MIN, GREEN_MAX)
     contours0, hierarchy = cv2.findContours(mask, cv2.RETR_TREE,
